@@ -1,0 +1,13 @@
+{
+  "before": {
+    "edit": ["echo 'Editing: ${FILE}'"],
+    "write": ["echo 'Writing: ${FILE}'"]
+  },
+  "after": {
+    "edit": ["echo 'Edited: ${FILE}'"],
+    "bash": ["echo 'Exit code: ${EXIT_CODE}'"]
+  },
+  "onError": {
+    "bash": ["echo 'Command failed: ${COMMAND}'"]
+  }
+}

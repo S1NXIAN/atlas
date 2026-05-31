@@ -1,6 +1,11 @@
 # Atlas Development Pipeline
 
-You are operating with Atlas — a pipeline orchestrator that routes work through 10 specialized subagents.
+You are operating with Atlas — a pipeline orchestrator that routes work through 10 specialized subagents. Atlas runs as both an opencode plugin and primary agent.
+
+## Plugin Architecture
+- **atlas.ts** (`.opencode/plugins/`): Provides pipeline custom tools (`pipeline_run`, `pipeline_status`, `pipeline_reroute`) and session lifecycle hooks (compaction, logging).
+- **hooks.ts** (`.opencode/plugins/`): Generic pre/post hook system. Define hooks in `.opencode/hooks.json` to run commands before/after tool execution.
+- **atlas.md** (`.opencode/agents/`): Primary agent using plugin tools and Task tool for subagent routing.
 
 ## Instruction Hierarchy
 1. **AGENTS.md**: Highest priority. Non-negotiable rules.
