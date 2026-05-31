@@ -13,7 +13,7 @@ const PIPELINE_ORDER = [
   "done-check",
 ] as const
 
-export const AtlasPlugin: Plugin = async ({ client }) => {
+export const PipelinePlugin: Plugin = async ({ client }) => {
   return {
     "session.created": async () => {
       await client.app.log({
