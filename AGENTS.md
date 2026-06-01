@@ -3,7 +3,7 @@
 You are operating with Atlas — a pipeline orchestrator that routes work through 11 specialized subagents. Atlas runs as both an opencode plugin and primary agent.
 
 ## Plugin Architecture
-- **pipeline.ts** (`.opencode/plugins/`): Provides pipeline custom tools (`pipeline_run`, `pipeline_status`, `pipeline_reroute`), session lifecycle hooks (compaction, logging), and WORKFLOW_STATE.md read/write for state persistence.
+- **pipeline.ts** (`.opencode/plugins/`): Provides pipeline custom tools (`pipeline_run`, `pipeline_status`, `pipeline_reroute`), session lifecycle hooks (compaction, logging), and `.tmp/active-session.json` -> `state.json` read/write for FSM state persistence.
 - **atlas.md** (`.opencode/agents/`): Primary agent using plugin tools and Task tool for subagent routing.
 
 ## Instruction Hierarchy
@@ -30,11 +30,11 @@ code-review, security-scan, and done-check are non-optional gates. Every task pa
 **Rule 4: Route Back on Failure**
 If code-review or security-scan finds blockers, route back to code-forge. Do not advance.
 
-**Rule 5: WORKFLOW_STATE.md Is Canonical**
-WORKFLOW_STATE.md is the single source of handoff truth. Every agent reads it before starting and updates only its own section after finishing. No agent modifies another agent's section.
+**Rule 5: state.json Is Canonical**
+`.tmp/sessions/{id}/state.json` is the single machine source of truth. WORKFLOW_STATE.md is a human-readable rendering rendered from state.json. Every agent reads `.tmp/active-session.json` to locate state.json before starting and writes its own `handoffs/{agent}.json` after finishing.
 
 **Rule 6: Path-Based Permissions Enforced**
-Only code-forge may edit code files. Non-code agents (spec-writer, code-scout, plan-crafter, contract-definition, doc-fetch, work-weaver, code-review, security-scan, code-clean, done-check) may only write new files and edit WORKFLOW_STATE.md.
+Only code-forge may edit code files. Non-code agents (spec-writer, code-scout, plan-crafter, contract-definition, doc-fetch, work-weaver, code-review, security-scan, code-clean, done-check) may only write new files and edit their handoff file at `.tmp/sessions/*/handoffs/{agent}.json`.
 
 **Rule 7: Evidence Gates Run After Every Agent**
 After each agent completes, the pipeline runs deterministic evidence checks against its output. These checks are pure function calls — no LLM invocation. If any check fails, the pipeline logs the failure and either reroutes or stops.
@@ -43,13 +43,13 @@ After each agent completes, the pipeline runs deterministic evidence checks agai
 If evidence gates fail, the pipeline automatically determines next action:
 - code-review or security-scan failure → automatic reroute to code-forge
 - All other stage failures → pipeline stops with error report
-No agent or LLM may override a gate failure. The WORKFLOW_STATE.md blocker list records the failure.
+No agent or LLM may override a gate failure. The `failedSteps[]` array in state.json records failures.
 
 **Rule 9: Planning Is Structured**
 plan-crafter outputs structured task JSON (`.tmp/tasks/*/task.json`) with dependency fields and parallel flags. Component-level plans go in `.tmp/plans/`. All planning artifacts are machine-readable and drive downstream execution.
 
 **Rule 10: Pre-Execution Approval Required**
-Before code-forge begins execution, the approval gate must be `approved` in WORKFLOW_STATE.md `## Approvals` section. If `pending`, the pipeline blocks until `pipeline_approve` is called.
+Before code-forge begins execution, the approval gate must be `approved` in state.json `approvals["pre-execution"]`. If `pending`, the pipeline blocks until `pipeline_approve` is called.
 
 **Rule 11: Contracts Before Code**
 The contract-definition stage runs between plan-crafter and code-forge. It produces type/interface definitions in `.tmp/contracts/`. Code-forge must not skip or override these contracts.
@@ -80,8 +80,7 @@ The following superpowers skills are available from /home/xian/superpowers-enhan
 ### social-accountability
 - **Purpose**: Pre-commit ethical/debt review step
 - **Injected in**: code-forge, work-weaver, code-clean subagent prompts
-- **Behavior**: Assess technical debt introduced, ethical implications, accessibility impact, and maintainability cost before finalizing
+- **Behavior**: Assess technical debt introduced, ethical implications, accessibility impact, and long-term maintainability cost before finalizing
 
 ## Deprecated
 - **security-triage** — Replaced by secure-coding + auth-patterns skills. Do not use.
-
