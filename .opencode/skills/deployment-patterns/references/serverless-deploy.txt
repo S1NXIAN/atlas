@@ -1,0 +1,124 @@
+SERVERLESS DEPLOYMENT
+
+INTRO:
+AWS Lambda with SAM (Serverless Application Model) or Serverless Framework enables
+deploying individual functions as immutable artifacts. Lambda aliases and CodeDeploy
+provide blue-green and canary deployment capabilities without managing servers.
+
+IMMUTABLE ARTIFACTS:
+  - Build Lambda deployment package as a ZIP or container image with unique version
+  - Use sam package to upload to S3 with versioned artifact key
+  - Never overwrite existing Lambda versions — each publish creates an immutable version
+  - Tag artifacts with git SHA + build timestamp in S3 object metadata
+
+  Build and package:
+    sam build
+    sam package --s3-bucket myapp-deployments --s3-prefix builds/$GIT_SHA
+    sam deploy --s3-bucket myapp-deployments --s3-prefix builds/$GIT_SHA
+
+BLUE-GREEN DEPLOYMENT:
+  Lambda aliases (e.g., "prod" alias) point to a specific version. Deploy new code
+  under a new version, then update the alias to point to the new version.
+
+  template.yaml alias routing config:
+    MyLambdaFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        Handler: index.handler
+        Runtime: nodejs20.x
+        AutoPublishAlias: live
+        DeploymentPreference:
+          Type: AllAtOnce    # blue-green switch
+
+  Manual alias update:
+    aws lambda update-alias \
+      --function-name myapp \
+      --name prod \
+      --function-version 42
+
+CANARY DEPLOYMENT:
+  Weighted alias routing sends a percentage of traffic to the new version.
+
+  template.yaml with canary:
+    MyLambdaFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        AutoPublishAlias: live
+        DeploymentPreference:
+          Type: Canary10Percent5Minutes
+          Alarms:
+            - !Ref MyErrorRateAlarm
+
+  Using CodeDeploy directly:
+    aws deploy create-deployment \
+      --application-name MyApp \
+      --deployment-group-name MyAppCanary \
+      --deployment-config-name CodeDeployDefault.LambdaCanary10Percent5Minutes
+
+  AdditionalWeightedVersions via SDK/CLI:
+    aws lambda update-alias \
+      --function-name myapp \
+      --name prod \
+      --function-version 42 \
+      --routing-config AdditionalVersionWeights={"41"=0.95}
+
+DATABASE MIGRATION SEQUENCING:
+  Use a separate Lambda function or a custom resource for migrations. Run expand
+  migrations before the main function deploy, contract migrations after.
+
+  template.yaml migration function:
+    MigrateExpandFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        Handler: migrations.expand
+        Timeout: 300
+    MigrateContractFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        Handler: migrations.contract
+        Timeout: 300
+
+  Deployment order in Makefile/CI:
+    sam deploy --template migrate-expand.yaml
+    sam deploy --template main-app.yaml
+    sam deploy --template migrate-contract.yaml
+
+HEALTH GATES:
+  Lambda health gates use CloudWatch alarms that trigger CodeDeploy rollback.
+
+  template.yaml alarm configuration:
+    DeploymentPreference:
+      Type: Canary10Percent5Minutes
+      Alarms:
+        - !Ref FunctionErrorAlarm
+        - !Ref DurationAlarm
+
+    FunctionErrorAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: !Sub "${AWS::StackName}-error-rate"
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        Statistic: Sum
+        Period: 60
+        EvaluationPeriods: 2
+        Threshold: 1
+        ComparisonOperator: GreaterThanThreshold
+
+ROLLBACK PROCEDURE:
+  1. Identify the previous healthy Lambda version number
+  2. Update the alias to point to the previous version:
+       aws lambda update-alias \
+         --function-name myapp \
+         --name prod \
+         --function-version <previous-version>
+  3. If using CodeDeploy, stop the current deployment and roll back:
+       aws deploy stop-deployment --deployment-id <id>
+       aws deploy create-deployment \
+         --application-name MyApp \
+         --deployment-group-name MyAppProd \
+         --revision <previous-revision>
+  4. For database rollback: run the rollback Lambda function or restore from backup
+  5. Verify health:
+       aws lambda invoke --function-name myapp:prod \
+         --payload '{"health":"check"}' response.json

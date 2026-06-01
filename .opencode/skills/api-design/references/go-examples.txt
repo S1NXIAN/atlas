@@ -1,0 +1,43 @@
+GO API PATTERNS
+
+URL ROUTING (chi):
+  r := chi.NewRouter()
+  r.Route("/api/v1/users", func(r chi.Router) {
+    r.Get("/", listUsers)
+    r.Post("/", createUser)
+    r.Route("/{id}", func(r chi.Router) {
+      r.Get("/", getUser)
+      r.Put("/", updateUser)
+      r.Delete("/", deleteUser)
+    })
+  })
+
+RESPONSE ENVELOPE:
+  type Envelope struct {
+    Data interface{} `json:"data,omitempty"`
+    Error *ErrorInfo `json:"error,omitempty"`
+    Meta *MetaInfo   `json:"meta,omitempty"`
+  }
+
+  type ErrorInfo struct {
+    Code    string `json:"code"`
+    Message string `json:"message"`
+  }
+
+CURSOR PAGINATION:
+  type PaginatedResponse struct {
+    Data      []User `json:"data"`
+    NextCursor string `json:"next_cursor"`
+    HasMore   bool   `json:"has_more"`
+  }
+
+RATE LIMIT MIDDLEWARE:
+  func RateLimit(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+      // NOTE: values shown are examples; use dynamic counters backed by a token-bucket or sliding-window algorithm in production
+      w.Header().Set("X-RateLimit-Limit", "100")
+      w.Header().Set("X-RateLimit-Remaining", "95")
+      w.Header().Set("X-RateLimit-Reset", "1700000000")
+      next.ServeHTTP(w, r)
+    })
+  }

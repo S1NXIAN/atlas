@@ -1,0 +1,93 @@
+GO/CHI BACKEND PATTERNS
+
+FILE STRUCTURE:
+  cmd/server/main.go     — entry point, signal handling
+  internal/
+    handler/             — HTTP handlers (thin)
+    service/             — business logic
+    repository/          — data access
+    middleware/          — auth, logging, recovery
+
+MIDDLEWARE CHAIN:
+  r := chi.NewRouter()
+  r.Use(middleware.RequestID)
+  r.Use(mwauth.Handler)
+  r.Use(mwlogging.Handler)
+  r.Use(chimw.Recoverer)
+  r.Route("/api/v1/users", func(r chi.Router) {
+    r.Post("/", createUserHandler)
+  })
+
+LAYERED HANDLER PATTERN:
+  type UserHandler struct {
+    svc *service.UserService
+  }
+  func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+    var input CreateUserInput
+    if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+      respondError(w, http.StatusBadRequest, "INVALID_INPUT", err.Error())
+      return
+    }
+    user, err := h.svc.Create(r.Context(), input)
+    if err != nil {
+      respondError(w, http.StatusConflict, "USER_EXISTS", err.Error())
+      return
+    }
+    respondJSON(w, http.StatusCreated, envelope{"data": user})
+  }
+
+SIGNAL HANDLING (GRACEFUL SHUTDOWN):
+  ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+  defer stop()
+  port := os.Getenv("PORT")
+  if port == "" {
+    port = "8080"
+  }
+  srv := &http.Server{Addr: ":" + port, Handler: r}
+  go srv.ListenAndServe()
+  <-ctx.Done()
+  stop()
+  shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+  defer cancel()
+  srv.Shutdown(shutdownCtx)
+
+HEALTH CHECK:
+  r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+  })
+  r.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
+    if err := db.PingContext(r.Context()); err != nil {
+      w.WriteHeader(http.StatusServiceUnavailable)
+      return
+    }
+    w.WriteHeader(http.StatusOK)
+  })
+
+STRUCTURED LOGGING:
+  import "log/slog"
+  logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+  logger.Info("user created", "user_id", user.ID, "email", user.Email)
+
+RESPONSE ENVELOPE:
+  type Envelope struct {
+    Data  interface{} `json:"data,omitempty"`
+    Error *ErrorInfo  `json:"error,omitempty"`
+    Meta  interface{} `json:"meta,omitempty"`
+  }
+  type ErrorInfo struct {
+    Code    string `json:"code"`
+    Message string `json:"message"`
+  }
+  func respondJSON(w http.ResponseWriter, status int, data interface{}) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    json.NewEncoder(w).Encode(Envelope{Data: data})
+  }
+  func respondError(w http.ResponseWriter, status int, code, message string) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    json.NewEncoder(w).Encode(Envelope{
+      Error: &ErrorInfo{Code: code, Message: message},
+    })
+  }

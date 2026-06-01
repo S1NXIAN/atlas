@@ -1,0 +1,15 @@
+# Pipeline runtime artifacts (regenerated on every run)
+.tmp/
+
+# Pipeline state file (regenerated on every run)
+WORKFLOW_STATE.md
+
+# Auto-generated knowledge graph cache
+graphify-out/
+
+# Temp security scan output
+semgrep-results.txt
+sarif
+
+# Dependencies
+node_modules/

@@ -1,0 +1,146 @@
+DISTRIBUTED TRACING PATTERNS
+
+INTRO:
+Distributed tracing tracks a single request across service boundaries using W3C trace
+context propagation. OpenTelemetry is the standard SDK for instrumentation, and Jaeger
+or Grafana Tempo serve as the tracing backend. Traces are essential for latency analysis,
+dependency mapping, and debugging cross-service failures.
+
+SETUP:
+  Install the OpenTelemetry SDK and configure the OTLP exporter to send spans to your
+  tracing backend. Set the service.name resource attribute to identify the service.
+
+  Node.js SDK setup:
+    npm install @opentelemetry/sdk-node @opentelemetry/exporter-trace-otlp-proto
+    npm install @opentelemetry/auto-instrumentations-node
+
+    const { NodeSDK } = require('@opentelemetry/sdk-node');
+    const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto');
+    const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
+    const { Resource } = require('@opentelemetry/resources');
+    const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
+
+    const sdk = new NodeSDK({
+      resource: new Resource({
+        [SemanticResourceAttributes.SERVICE_NAME]: 'myapp',
+        [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
+      }),
+      traceExporter: new OTLPTraceExporter({
+        url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+      }),
+      instrumentations: [getNodeAutoInstrumentations()],
+    });
+
+    sdk.start();
+
+  Python SDK setup:
+    pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto
+    pip install opentelemetry-instrumentation
+
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
+    provider = TracerProvider(
+        resource=Resource.create({SERVICE_NAME: "myapp"})
+    )
+    processor = BatchSpanProcessor(OTLPSpanExporter())
+    provider.add_span_processor(processor)
+    trace.set_tracer_provider(provider)
+
+  Go SDK setup:
+    import (
+      "go.opentelemetry.io/otel"
+      "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+      "go.opentelemetry.io/otel/sdk/resource"
+      "go.opentelemetry.io/otel/sdk/trace"
+      semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+    )
+
+    exporter, _ := otlptracehttp.New(ctx)
+    tp := trace.NewTracerProvider(
+      trace.WithBatcher(exporter),
+      trace.WithResource(resource.NewWithAttributes(
+        semconv.SchemaURL,
+        semconv.ServiceNameKey.String("myapp"),
+      )),
+    )
+    otel.SetTracerProvider(tp)
+
+CORE PATTERNS:
+  traceparent header format:
+    traceparent: 00-{trace_id}-{span_id}-{flag}
+    Example: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01
+    - 00: version
+    - trace_id: 16-byte (32 hex chars) globally unique trace ID
+    - span_id: 8-byte (16 hex chars) identifier for the current span
+    - flag: 01 (sampled) or 00 (not sampled)
+
+  tracestate header format:
+    tracestate: vendor1=value1,vendor2=value2
+    Carries vendor-specific trace data across services. Preserve unknown entries.
+
+  Auto-instrumentation captures spans automatically for:
+    - HTTP client/server requests
+    - Database queries (SQL, Redis, MongoDB)
+    - Message queue produce/consume (Kafka, SQS, RabbitMQ)
+    - gRPC calls
+    - File I/O operations
+
+  Manual spans for business logic boundaries:
+    Node.js:
+      const tracer = trace.getTracer('myapp');
+      const span = tracer.startSpan('processOrder', { attributes: { orderId } });
+      return context.with(trace.setSpan(context.active(), span), async () => {
+        // business logic
+        span.end();
+      });
+
+    Python:
+      tracer = trace.get_tracer(__name__)
+      with tracer.start_as_current_span("processOrder") as span:
+          span.set_attribute("order_id", order_id)
+          # business logic
+
+    Go:
+      ctx, span := tracer.Start(ctx, "processOrder")
+      defer span.End()
+      span.SetAttributes(attribute.String("order_id", orderId))
+
+INTEGRATION WITH OTHER PILLARS:
+  Trace ID in logs — Include trace_id in every structured log line. In Node.js with
+  pino, use a child logger that adds the trace context automatically.
+
+  Exemplars on metrics — Attach the current trace_id as an exemplar when incrementing
+  counters or observing histogram values. This links metric spikes to specific traces.
+
+  Context propagation in HTTP:
+    - Extract traceparent/tracestate from incoming request headers
+    - Create a child span (or continue the trace)
+    - Inject traceparent/tracestate into outgoing request headers
+
+  Context propagation in message queues:
+    - Producer: inject traceparent into message attributes/headers
+    - Consumer: extract traceparent from message attributes, create a child span
+    - Without this, traces are broken at every async boundary
+
+COMMON PITFALLS:
+  - Missing async context — In Node.js, async hooks must be enabled for context
+    propagation across async boundaries. Without it, spans are orphaned. In Python,
+    contextvars handles this automatically. In Go, pass context.Context explicitly.
+  - Sampling tradeoffs — Head-based sampling (sample at the edge) loses traces for
+    most failed requests. Tail-based sampling (sample after completion) preserves
+    failed traces at higher cost. For production, use tail-based sampling or a
+    hybrid: sample all errors, sample 5% of success traces.
+  - Reverse proxy stripping trace headers — Proxies (nginx, Envoy, ALB) must be
+    configured to forward traceparent and tracestate headers. If headers are
+    stripped, the trace starts fresh at your service and cannot connect to the
+    caller's trace.
+  - Over-instrumentation creates noise — Auto-instrumentation captures everything.
+    Use span sampling or filter out low-value spans (health checks, favicon requests)
+    to reduce tracing backend storage costs.
+  - Missing span attributes for debugging — Without adding business-logic attributes
+    (user_id, order_id, error_code), spans are hard to search. Always annotate spans
+    with domain-relevant attributes.

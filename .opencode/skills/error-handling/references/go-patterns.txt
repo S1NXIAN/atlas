@@ -1,0 +1,36 @@
+GO ERROR PATTERNS
+
+SENTINEL ERRORS:
+  var ErrNotFound = errors.New("not found")
+  var ErrUnauthorized = errors.New("unauthorized")
+  var ErrConflict = errors.New("conflict")
+
+ERROR WRAPPING:
+  return nil, fmt.Errorf("user %s: %w", id, ErrNotFound)
+
+ERROR CHECKING:
+  if errors.Is(err, domain.ErrNotFound) { ... }
+  var notFound *NotFoundError
+  if errors.As(err, &notFound) { ... }
+
+HTTP HANDLER MIDDLEWARE:
+  switch {
+  case errors.Is(err, ErrNotFound):
+    writeError(w, http.StatusNotFound, "not_found", err.Error())
+  case errors.Is(err, ErrUnauthorized):
+    writeError(w, http.StatusForbidden, "forbidden", "Access denied")
+  default:
+    slog.Error("unexpected error", "err", err)
+    writeError(w, http.StatusInternalServerError, "internal_error", "An unexpected error occurred")
+  }
+
+RETRY WITH BACKOFF:
+  for attempt := 1; attempt <= maxAttempts; attempt++ {
+    err := fn()
+    if err == nil { return nil }
+    if !isRetriable(err) { return err }
+    jitter := rand.Float64() * baseDelay
+    delay := time.Duration(math.Min(float64(baseDelay*1<<(attempt-1)+time.Duration(jitter)), float64(maxDelay)))
+    time.Sleep(delay)
+  }
+  return lastError

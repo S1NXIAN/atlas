@@ -1,0 +1,56 @@
+RBAC PATTERNS
+
+PERMISSION NAMING:
+  resource:action
+  Examples: user:create, user:read, order:approve, report:export
+
+ROLE-PERMISSION SCHEMA (PostgreSQL):
+  CREATE TABLE roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT
+  );
+
+  CREATE TABLE permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) UNIQUE NOT NULL
+  );
+
+  CREATE TABLE role_permissions (
+    role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id UUID REFERENCES permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+  );
+
+  CREATE TABLE user_roles (
+    user_id UUID NOT NULL,
+    role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, role_id)
+  );
+
+MIDDLEWARE PATTERN (TypeScript):
+  function requirePermission(permission: string) {
+    return (req, res, next) => {
+      if (!req.user) return res.status(401).json({ error: { code: "UNAUTHORIZED" } })
+      if (!req.user.permissions.includes(permission))
+        return res.status(403).json({ error: { code: "FORBIDDEN" } })
+      next()
+    }
+  }
+
+ROLE EXAMPLES:
+  admin:     user:*, order:*, report:export
+  manager:   user:read, order:read, order:approve, report:export
+  support:   user:read, order:read
+  viewer:    user:read (self only)
+
+AUDIT TABLE:
+  CREATE TABLE auth_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    timestamp TIMESTAMPTZ DEFAULT now(),
+    actor_id UUID,
+    action VARCHAR(50),
+    resource_type VARCHAR(50),
+    outcome VARCHAR(20),
+    details JSONB
+  );

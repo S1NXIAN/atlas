@@ -1,0 +1,39 @@
+CONVENTIONAL COMMIT TEMPLATES
+
+feat: add user authentication
+  - New feature for end-user. Not internal refactors.
+  - Body: describe what and why, not how.
+
+feat(auth): add OAuth2 login flow
+
+fix: correct race condition in cache invalidation
+  - Bug fix. Should map to an issue.
+
+fix(api): return 404 for deleted resources
+
+chore: update dependencies
+  - Maintenance, tooling, config changes. No production code change.
+
+chore: pin typescript to 5.4
+
+docs: add migration guide for v2 API
+  - Documentation only.
+
+refactor: extract payment validation into service
+  - Code restructuring. No behavior change. No new tests needed unless coverage gap.
+
+perf: lazy-load heavy chart component
+  - Performance improvement.
+
+test: add integration tests for auth flow
+  - Adding or updating tests.
+
+ci: add lint step to GitHub Actions
+  - CI/CD pipeline changes.
+
+BREAKING CHANGE:
+  - Use in footer. Separate from subject by blank line.
+  - Format: BREAKING CHANGE: description of what broke and migration path.
+
+TYPES REFERENCE:
+  feat, fix, chore, docs, style, refactor, perf, test, ci, build

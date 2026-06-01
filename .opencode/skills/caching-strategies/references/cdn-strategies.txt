@@ -1,0 +1,135 @@
+CDN CACHING STRATEGIES
+
+INTRO:
+Content Delivery Networks (CDNs) cache content at edge locations close to users,
+reducing latency and origin server load. CloudFront and CloudFlare are the most
+common providers. CDN caching follows a hierarchy: edge (fastest) -> region -> origin.
+Effective CDN caching requires versioned filenames, proper Cache-Control headers,
+and a cache invalidation strategy.
+
+CORE PATTERNS:
+
+  Versioned filenames — The most reliable CDN caching strategy. Include a content
+  hash or version in the filename so every deployment produces unique URLs.
+
+    Webpack/Vite configuration:
+      output: {
+        filename: 'js/app.[contenthash:8].js',
+        chunkFilename: 'js/[name].[contenthash:8].chunk.js',
+      }
+
+    Result: app.a3b8c9d7.js
+    When the content changes, the hash changes, producing a new URL.
+
+  Immutable Cache-Control — Versioned assets are cached permanently because the
+  URL changes when the content changes.
+
+    Cache-Control: public, max-age=31536000, immutable
+
+    The immutable directive tells browsers to never revalidate during the max-age
+    window. Without immutable, some browsers revalidate on page reload even with
+    a 1-year max-age.
+
+  CDN cache invalidation — For non-versioned URLs, invalidate the CDN cache after
+  deployment. Most CDNs support API-based invalidation by path or wildcard.
+
+    CloudFront invalidation:
+      aws cloudfront create-invalidation \
+        --distribution-id EXXXXXXXXXXXXX \
+        --paths "/index.html" "/assets/*"
+
+    CloudFlare purge:
+      curl -X POST "https://api.cloudflare.com/client/v4/zones/ZONEID/purge_cache" \
+        -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+        -H "Content-Type: application/json" \
+        --data '{"files":["https://example.com/index.html"]}'
+
+    Invalidation limits: CloudFront allows 1000 paths per invalidation, 15
+    concurrent invalidations. CloudFlare allows 500MB of URL patterns per purge.
+
+  s-maxage for dynamic content — API responses that change less frequently can be
+  cached at the CDN but not in the browser:
+
+    Cache-Control: public, max-age=0, s-maxage=60
+
+    This tells the browser: don't cache (max-age=0). Tells the CDN: cache for 60
+    seconds (s-maxage=60). Perfect for API responses that change every minute.
+
+CONFIGURATION:
+
+  CloudFront cache policy:
+    - Cache based on: Origin request headers (Accept-Encoding, Accept-Language)
+    - Default TTL: 86400s (1 day)
+    - Max TTL: 31536000s (1 year)
+    - Min TTL: 0s
+    - Forward cookies: none (for static assets) or whitelist (for personalized)
+    - Query string forwarding: none (static) or all (dynamic)
+
+  CloudFront Lambda@Edge for origin rewrite:
+    Use Lambda@Edge to rewrite requests to the correct origin or to add security
+    headers. Example: rewrite /index.html to /index.html for SPA routing.
+
+  CloudFront signed URLs for private content:
+    Use signed URLs or signed cookies for content that requires authentication.
+    Sign with a CloudFront key pair and set an expiry time.
+
+  CloudFlare cache rules:
+    - Cache by: request URL, response headers, cookies
+    - Edge TTL: Respect origin Cache-Control or override (2 hours default)
+    - Cache key: include Host, exclude query string for static assets
+    - Override: set Cache-Control header via Page Rules or Transform Rules
+
+  CloudFlare Argo Tiered Cache:
+    Reduces origin load by caching at regional hubs before serving from edge.
+    Enabled in CloudFlare dashboard under Speed > Optimization > Tiered Cache.
+
+  CloudFlare Cache Reserve:
+    Stores cache in persistent storage, reducing origin fetch even for
+    low-traffic content. Useful for large media assets.
+
+  Image optimization at CDN:
+    CloudFront + Lambda@Edge or CloudFlare Image Resizing:
+      - Auto-convert to WebP or AVIF (with Accept negotiation)
+      - Resize based on viewport (responsive images via srcset)
+      - Compress to quality level based on file type
+
+    Example CloudFlare image URL:
+      https://example.com/cdn-cgi/image/width=800,quality=80,format=webp/image.jpg
+
+COMMON PITFALLS:
+
+  - Query-string versioning — Using ?v=1 for cache busting causes CDN and proxy
+    caches to treat each version as a separate URL. Old versions are never evicted.
+    Use content-hash filenames instead: app.a3b8c9.js not app.js?v=1.
+  - Invalidation limits — CloudFront invalidations cost $0.005 per path and are
+    limited to 1000 paths per month free. For frequent deploys, use versioned
+    directories (/v1/assets/) and invalidate a single path: /v1/*.
+  - Dynamic content incorrectly cached — API responses with user-specific data must
+    not be cached at the CDN (use Cache-Control: private). Conversely, public API
+    responses that should be cached are missed because Cache-Control is missing.
+  - Missing Vary header — If the response content differs by Accept-Encoding or
+    Accept-Language but no Vary header is set, the CDN may serve compressed content
+    to clients that don't support it, or English content to French users.
+
+MONITORING:
+
+  CloudFront CacheHitRate metric (CloudWatch):
+    CacheHitRate = hits / (hits + misses)
+    Monitor per distribution. Target: >90% for static assets, >70% for dynamic.
+    Alert on sudden drops which may indicate a configuration change.
+
+  CloudFlare analytics:
+    Dashboard provides cache ratio per hostname. Use "Caching" > "Cache Analytics"
+    to view hit rate trends, purge history, and bandwidth savings.
+
+  Origin fetch rate:
+    Monitor the request rate to your origin server. A healthy CDN setup should
+    have the origin handling <10% of the total request volume. Sudden increases
+    in origin traffic indicate a cache configuration issue or a recent deploy
+    without proper cache warming.
+
+  CDN status headers:
+    CloudFront: X-Cache: Hit from cloudfront / Miss from cloudfront
+    CloudFlare: cf-cache-status: HIT / MISS / DYNAMIC / EXPIRED / REVALIDATED
+    Log these headers in application monitoring to correlate cache behavior
+    with user-facing performance.

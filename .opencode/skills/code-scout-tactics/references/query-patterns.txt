@@ -1,0 +1,149 @@
+GREP QUERY PATTERNS FOR CODE SCOUTING
+======================================
+
+One-liner grep commands for finding key codebase constructs.
+These work across TypeScript, JavaScript, Python, Go, and Java codebases.
+
+ENTRY POINTS
+------------
+
+# Find main() function definitions
+grep -rn "func main\|def main\|public static void main\|if.*__name__.*__main__" --include="*.go" --include="*.py" --include="*.java" --include="*.ts"
+
+# Find app/server initialization
+grep -rn "app\.listen\|server\.start\|app\.run\|\.listen(" --include="*.ts" --include="*.js" --include="*.py" --include="*.go"
+
+# Find CLI command definitions (Cobra, Click, Typer)
+grep -rn "func init\|NewCommand\|@click\.\|@app\.command\|rootCmd" --include="*.go" --include="*.py"
+
+# Find event listeners/subscribers
+grep -rn "addEventListener\|on('\|subscribe\|\.on(" --include="*.ts" --include="*.js" --include="*.py"
+
+# Find queue consumers
+grep -rn "queue.*consume\|consumer.*handler\|HandleMessage\|process.*message" --include="*.go" --include="*.py" --include="*.ts"
+
+# Find cron schedule definitions
+grep -rn "\*/.\* \* \* \* \*\|cron\.\|@schedule\|schedule(" --include="*.go" --include="*.py" --include="*.ts" --include="*.yaml" --include="*.yml"
+
+ROUTES
+------
+
+# Find HTTP route definitions (Express/Fastify/Chi/etc.)
+grep -rn "app\.get\|app\.post\|app\.put\|app\.delete\|app\.patch\|router\.get\|router\.post" --include="*.ts" --include="*.js"
+
+# Find FastAPI/Django route decorators
+grep -rn "@app\.\|@router\.\|@\.route\|path(" --include="*.py"
+
+# Find Go Chi/Gin route definitions
+grep -rn "router\.\|r\.Get\|r\.Post\|r\.Put\|r\.Delete\|mux\.Handle" --include="*.go"
+
+# Find all route patterns at once
+grep -rn "\.\(get\|post\|put\|delete\|patch\)(" --include="*.ts" --include="*.js" --include="*.py" --include="*.go" | grep -v test | grep -v "\.spec\|\.test"
+
+ERROR HANDLERS
+--------------
+
+# Find error handler middleware
+grep -rn "ErrorHandler\|error.*middleware\|errorHandler\|AppError\|HttpError" --include="*.ts" --include="*.js" --include="*.go"
+
+# Find global exception handlers
+grep -rn "@ExceptionHandler\|ExceptionHandler\|global.*error\|error.*handler" --include="*.ts" --include="*.java" --include="*.py"
+
+# Find custom error classes
+grep -rn "class.*Error\|class.*Exception\|type.*Error\|struct.*Error" --include="*.ts" --include="*.py" --include="*.go"
+
+DATA MODELS
+-----------
+
+# Find TypeScript/JavaScript type/interface definitions
+grep -rn "type.*=\|interface.*{\|class.*extends" --include="*.ts" --include="*.tsx" | grep -v "node_modules"
+
+# Find ORM entity definitions
+grep -rn "@Entity\|@Table\|class.*extends Model\|schema.*={" --include="*.ts" --include="*.py" --include="*.java"
+
+# Find database schema definitions
+grep -rn "createTable\|CREATE TABLE\|db\.define\|mongoose\.\|\.hasMany\|\.belongsTo" --include="*.ts" --include="*.js" --include="*.py"
+
+# Find SQL migration files
+find . -type f -name "*migration*" -o -name "*schema*" -o -name "*.sql" | grep -v node_modules
+
+# Find Go struct definitions (common data model pattern)
+grep -rn "type.*struct {" --include="*.go"
+
+DEPENDENCY INJECTION
+--------------------
+
+# Find DI container wiring
+grep -rn "new \|inject\b\|provide\b\|container\b\|@Injectable\|@Inject(" --include="*.ts" --include="*.js" --include="*.py" --include="*.java"
+
+# Find module/provider registration
+grep -rn "@Module\|@Provider\|providers:\|controllers:\|imports:" --include="*.ts" --include="*.py"
+
+# Find factory functions
+grep -rn "function.*Factory\|func.*Factory\|class.*Factory\|create.*Service\|make.*Handler" --include="*.ts" --include="*.go" --include="*.py"
+
+TESTS
+-----
+
+# Find test directories (general)
+find . -type d -name "test" -o -type d -name "tests" -o -type d -name "__tests__" -o -type d -name "spec" | grep -v node_modules | grep -v .git
+
+# Find test files (general)
+find . -type f \( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*" -o -name "*_test.go" \) | grep -v node_modules
+
+# Find test runner config
+grep -rn "jest\|vitest\|pytest\|go test\|mocha\|jasmine" --include="*.json" --include="*.yaml" --include="*.yml" --include="*.toml" --include="Makefile"
+
+# Find integration tests specifically
+find . -type f \( -name "*.integration.*" -o -name "*integration*" \) | grep -v node_modules
+
+# Find test setup/teardown
+grep -rn "beforeAll\|beforeEach\|afterAll\|afterEach\|setUp\|tearDown\|setup_module\|teardown_module" --include="*.ts" --include="*.js" --include="*.py"
+
+MIDDLEWARE
+----------
+
+# Find middleware setup (Express/Fastify)
+grep -rn "app\.use\|middleware\|\.use(" --include="*.ts" --include="*.js" --include="*.py"
+
+# Find middleware definitions
+grep -rn "function.*middleware\|const.*middleware\|middleware.*=>\|@middleware" --include="*.ts" --include="*.js" --include="*.py"
+
+# Find auth middleware specifically
+grep -rn "auth.*middleware\|authenticate\|requireAuth\|protect\|authorize" --include="*.ts" --include="*.js" --include="*.py" --include="*.go"
+
+CONFIGURATION
+-------------
+
+# Find config loading
+grep -rn "config\|env\b" --include="*.ts" --include="*.js" --include="*.py" --include="*.go" | grep -i "load\|read\|get\|from_env" | head -30
+
+# Find environment variable access
+grep -rn "process\.env\|os\.getenv\|os\.environ\|os\.Environ" --include="*.ts" --include="*.js" --include="*.py" --include="*.go"
+
+# Find config files
+find . -type f \( -name "*.env*" -o -name "config*" -o -name "settings*" -o -name "application*" -o -name "*.yaml" -o -name "*.yml" -o -name "*.toml" \) | grep -v node_modules | grep -v .git | grep -v "package\|yarn.lock\|go.sum"
+
+# Find Docker configuration
+find . -type f -name "Dockerfile" -o -name "docker-compose*" -o -name ".dockerignore"
+
+# Find CI/CD configuration
+find . -type f -path "*/.github/*" -name "*.yml" -o -type f -path "*/.gitlab*" -name "*.yml" -o -type f -name ".circleci/*" -o -type f -name "Jenkinsfile" -o -type f -name "Makefile"
+
+ARCHITECTURE & DESIGN
+---------------------
+
+# Find ADR files
+find . -type f -path "*/adr/*" -name "*.md" -o -type f -path "*/decisions/*" -name "*.md" -o -type f -path "*/rfcs/*" -name "*.md"
+
+# Find README files (documentation entry points)
+find . -maxdepth 3 -type f -name "README.md" | grep -v node_modules
+
+# Find architecture diagrams
+find . -type f \( -name "*.puml" -o -name "*.plantuml" -o -name "*.mmd" -o -name "*.drawio" -o -name "*.excalidraw" \)
+
+# Find Makefile or task runner
+find . -maxdepth 2 -type f \( -name "Makefile" -o -name "Taskfile*" -o -name "Justfile" \)
+
+# Find package manager files (dependency info)
+find . -maxdepth 2 -type f \( -name "package.json" -o -name "go.mod" -o -name "requirements.txt" -o -name "pyproject.toml" -o -name "Cargo.toml" -o -name "Gemfile" \)
