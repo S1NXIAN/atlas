@@ -76,7 +76,7 @@ mkdir -p "$OPENCODE_PLUGIN_DIR"
 if [ -f "$OPENCODE_PLUGIN_DIR/atlas.js" ] || [ -L "$OPENCODE_PLUGIN_DIR/atlas.js" ]; then
     rm -f "$OPENCODE_PLUGIN_DIR/atlas.js"
 fi
-ln -s "$INSTALL_DIR/.opencode/plugins/atlas.js" "$OPENCODE_PLUGIN_DIR/atlas.js"
+ln -sf "$(cd "$INSTALL_DIR" && pwd)/.opencode/plugins/atlas.js" "$OPENCODE_PLUGIN_DIR/atlas.js"
 
 # Verify
 echo ""
