@@ -51,7 +51,7 @@ read -r choice
 choice=${choice:-1}
 
 case "$choice" in
-    1) INSTALL_DIR=".opencode/atlas"
+    1) INSTALL_DIR="${PWD}/.opencode/atlas"
        echo -e "${GREEN}Installing to ${INSTALL_DIR}${NC}"
        ;;
     2) INSTALL_DIR="$HOME/.config/opencode/atlas"
@@ -60,10 +60,15 @@ case "$choice" in
     *) echo -e "${RED}Invalid choice. Exiting.${NC}"; exit 1 ;;
 esac
 
+# If already installed, resolve real path (follows symlinks, normalizes)
+if [ -d "$INSTALL_DIR" ]; then
+    INSTALL_DIR="$(cd "$INSTALL_DIR" && pwd)"
+fi
+
 # Clone Atlas
 if [ -d "$INSTALL_DIR" ]; then
     echo -e "${YELLOW}Atlas already installed. Updating...${NC}"
-    cd "$INSTALL_DIR" && git pull
+    (cd "$INSTALL_DIR" && git pull)
 else
     mkdir -p "$(dirname "$INSTALL_DIR")"
     git clone "$REPO_URL" "$INSTALL_DIR"
@@ -76,7 +81,7 @@ mkdir -p "$OPENCODE_PLUGIN_DIR"
 if [ -f "$OPENCODE_PLUGIN_DIR/atlas.js" ] || [ -L "$OPENCODE_PLUGIN_DIR/atlas.js" ]; then
     rm -f "$OPENCODE_PLUGIN_DIR/atlas.js"
 fi
-ln -sf "$(cd "$INSTALL_DIR" && pwd)/.opencode/plugins/atlas.js" "$OPENCODE_PLUGIN_DIR/atlas.js"
+ln -sf "$INSTALL_DIR/.opencode/plugins/atlas.js" "$OPENCODE_PLUGIN_DIR/atlas.js"
 
 # Verify
 echo ""
