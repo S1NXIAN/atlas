@@ -1,0 +1,75 @@
+digraph STYLE_GUIDE {
+    // Node type examples with their shapes
+    subgraph cluster_node_types {
+        label="NODE TYPES AND SHAPES";
+
+        // Questions are diamonds
+        "Is this a question?" [shape=diamond];
+
+        // Actions are boxes (default)
+        "Take an action" [shape=box];
+
+        // Commands are plaintext
+        "npm test" [shape=plaintext];
+
+        // States are ellipses
+        "Current state" [shape=ellipse];
+
+        // Warnings are octagons
+        "STOP: Critical warning" [shape=octagon];
+
+        // Entry/exit are double circles
+        "Process starts" [shape=doublecircle];
+        "Process complete" [shape=doublecircle];
+    }
+
+    // Edge naming conventions
+    subgraph cluster_edge_types {
+        label="EDGE LABELS";
+
+        "Binary decision?" [shape=diamond];
+        "Yes path" [shape=box];
+        "No path" [shape=box];
+
+        "Binary decision?" -> "Yes path" [label="yes"];
+        "Binary decision?" -> "No path" [label="no"];
+    }
+
+    // Process structure template
+    subgraph cluster_structure {
+        label="PROCESS STRUCTURE TEMPLATE";
+
+        "Trigger: Something happens" [shape=ellipse];
+        "Initial check?" [shape=diamond];
+        "Main action" [shape=box];
+        "Another check?" [shape=diamond];
+        "Alternative action" [shape=box];
+        "Process complete" [shape=doublecircle];
+
+        "Trigger: Something happens" -> "Initial check?";
+        "Initial check?" -> "Main action" [label="yes"];
+        "Initial check?" -> "Alternative action" [label="no"];
+        "Main action" -> "Another check?";
+        "Another check?" -> "Process complete" [label="ok"];
+        "Another check?" -> "Alternative action" [label="fix"];
+        "Alternative action" -> "Process complete";
+    }
+
+    // When to use which shape
+    subgraph cluster_shape_rules {
+        label="WHEN TO USE EACH SHAPE";
+
+        "Is it a decision?" [shape=diamond];
+        "Is it a command?" [shape=diamond];
+        "Is it a warning?" [shape=diamond];
+        "Is it entry/exit?" [shape=diamond];
+        "Is it a state?" [shape=diamond];
+
+        "Use diamond" [shape=diamond];
+        "Use plaintext" [shape=plaintext];
+        "Use octagon" [shape=octagon];
+        "Use doublecircle" [shape=doublecircle];
+        "Use ellipse" [shape=ellipse];
+        "Use box (default)" [shape=box];
+    }
+}

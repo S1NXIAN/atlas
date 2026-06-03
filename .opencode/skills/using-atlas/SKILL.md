@@ -55,7 +55,7 @@ Does a skill description match this intent? (even 1% chance?)
 
 ## Skill Priority
 
-1. **Process skills** first: brainstorming → writing-plans → executing/subagent-driven-development → requesting-code-review → receiving-code-review → finishing-a-development-branch
+1. **Process skills** first: brainstorming → writing-plans → writing-skills → executing/subagent-driven-development → requesting-code-review → receiving-code-review → finishing-a-development-branch
 2. **Implementation skills** as needed: test-driven-development, using-git-worktrees, systematic-debugging, dispatching-parallel-agents
 
 ## Skill Types
