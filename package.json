@@ -1,0 +1,12 @@
+{
+  "name": "atlas",
+  "version": "1.0.0",
+  "description": "Unified OpenCode experience — methodology (Superpowers) + context (OpenAgentsControl) + infrastructure (Oh My OpenCode)",
+  "type": "module",
+  "main": ".opencode/plugins/atlas.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/atlas.git"
+  }
+}
