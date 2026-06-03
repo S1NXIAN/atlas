@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work — presents structured options for merge, PR, or cleanup
+description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work — guides completion of development work by presenting structured options for merge, PR, or cleanup
 ---
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
@@ -13,42 +13,153 @@ Guide completion of development work by presenting clear options and handling ch
 - Implementation is not complete
 - No development branch exists (you're on main)
 
-## Process
+## The Process
 
 ### Step 1: Verify Tests
+
 Run the project's test suite. If tests fail, show failures and stop.
 
+**If tests fail:**
+```
+Tests failing (<N> failures). Must fix before completing.
+Cannot proceed with merge/PR until tests pass.
+```
+
+**If tests pass:** Continue to Step 2.
+
 ### Step 2: Detect Environment
-Determine workspace state using `GIT_DIR` vs `GIT_COMMON`:
-- Normal repo or named-branch worktree → 4 options
-- Detached HEAD → 3 options
+
+```bash
+GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
+GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
+```
+
+| State | Options | Cleanup |
+|-------|---------|---------|
+| `GIT_DIR == GIT_COMMON` (normal repo) | Standard 4 options | No worktree cleanup |
+| `GIT_DIR != GIT_COMMON`, named branch | Standard 4 options | Provenance-based cleanup |
+| `GIT_DIR != GIT_COMMON`, detached HEAD | Reduced 3 options (no merge) | No cleanup |
 
 ### Step 3: Determine Base Branch
-Try `git merge-base HEAD main` or `master`.
+
+```bash
+git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
+```
+
+Or ask: "This branch split from main — is that correct?"
 
 ### Step 4: Present Options
 
-**Normal repo / named-branch worktree:**
-1. **Merge** — merge back to base branch locally
-2. **PR** — push and create a pull request
-3. **Keep** — keep branch as-is
-4. **Discard** — throw away this work
+**Normal repo and named-branch worktree:**
+```
+Implementation complete. What would you like to do?
 
-**Detached HEAD:**
-1. **PR** — push and create a pull request
-2. **Keep** — note the SHA for later
-3. **Discard** — throw away this work
+1. Merge back to <base-branch> locally
+2. Push and create a Pull Request
+3. Keep the branch as-is (I'll handle it later)
+4. Discard this work
+
+Which option?
+```
+
+**Detached HEAD (3 options):**
+```
+Implementation complete. You're on a detached HEAD.
+
+1. Push as new branch and create a Pull Request
+2. Keep as-is (I'll handle it later)
+3. Discard this work
+
+Which option?
+```
+
+Don't add explanation. Keep options concise.
 
 ### Step 5: Execute Choice
-Carry out the selected option with the correct git commands.
+
+#### Option 1: Merge Locally
+```bash
+MAIN_ROOT=$(git -C "$(git rev-parse --git-common-dir)/.." rev-parse --show-toplevel)
+cd "$MAIN_ROOT"
+git checkout <base-branch>
+git pull
+git merge <feature-branch>
+# Verify tests on merged result
+# Then: cleanup worktree (Step 6), delete branch
+git branch -d <feature-branch>
+```
+
+#### Option 2: Push and Create PR
+```bash
+git push -u origin <feature-branch>
+gh pr create --title "<title>" --body "## Summary\n<2-3 bullets>"
+```
+Do NOT clean up worktree — user needs it for PR iteration.
+
+#### Option 3: Keep As-Is
+Report: "Keeping branch <name>." Don't cleanup worktree.
+
+#### Option 4: Discard
+**Confirm first — require exact "discard" typed:**
+```
+This will permanently delete:
+- Branch <name>
+- Worktree at <path>
+
+Type 'discard' to confirm.
+```
+If confirmed: cleanup worktree (Step 6), then `git branch -D <feature-branch>`.
 
 ### Step 6: Cleanup Workspace
-Only for Merge and Discard options. Check provenance — only clean up worktrees under known paths (`.worktrees/`, `worktrees/`, `~/.config/atlas/worktrees/`).
+
+Only for Options 1 and 4. Check provenance — only clean up worktrees under known paths:
+
+```bash
+WORKTREE_PATH=$(git rev-parse --show-toplevel)
+```
+**If path under `.worktrees/`, `worktrees/`, or `~/.config/atlas/worktrees/`:** Atlas owns cleanup.
+```bash
+git worktree remove "$WORKTREE_PATH"
+git worktree prune
+```
+**Otherwise:** Host environment owns this workspace. Do NOT remove it.
+
+## Quick Reference
+
+| Option | Merge | Push | Keep Worktree | Cleanup Branch |
+|--------|-------|------|---------------|----------------|
+| 1. Merge locally | yes | - | - | yes |
+| 2. Create PR | - | yes | yes | - |
+| 3. Keep as-is | - | - | yes | - |
+| 4. Discard | - | - | - | yes (force) |
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Proceeding with failing tests | Always verify tests before offering options |
+| Cleaning up worktree for Option 2 | Only cleanup for Options 1 and 4 |
+| Deleting branch before removing worktree | Merge first, remove worktree, delete branch |
+| Running git worktree remove from inside the worktree | cd to main repo root first |
+| Cleaning up harness-owned worktrees | Only clean up paths under known directories |
+| No confirmation for discard | Require typed "discard" confirmation |
+
+## Red Flags
+
+**Never:**
+- Proceed with failing tests
+- Merge without verifying tests on result
+- Delete work without typed confirmation
+- Force-push without explicit request
+- Remove a worktree before confirming merge success
+- Run `git worktree remove` from inside the worktree
+- Clean up worktrees you didn't create
 
 ## Quality Checklist
 
 - [ ] Tests pass before proceeding
-- [ ] Environment detected correctly
+- [ ] Environment detected correctly (normal vs worktree vs detached HEAD)
 - [ ] Base branch determined
-- [ ] Options presented clearly
-- [ ] Workspace cleaned up (for merge/discard)
+- [ ] Options presented clearly (4 or 3 as appropriate)
+- [ ] Workspace cleaned up for merge/discard options only
+- [ ] Typed confirmation required for discard

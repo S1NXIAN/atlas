@@ -69,7 +69,7 @@ Include `ultrawork` (or `ulw`) in any prompt to activate the full Atlas pipeline
 │   │   ├── workflows/           # Review, delegate, break down
 │   │   └── patterns/            # Error handling, logging, config
 │   └── project/                 # Your patterns here
-├── command/                     # Slash commands
+├── commands/                    # Slash commands
 │   ├── add-context.md           # Context wizard
 │   ├── commit.md                # Smart commits
 │   └── test.md                  # Test pipeline

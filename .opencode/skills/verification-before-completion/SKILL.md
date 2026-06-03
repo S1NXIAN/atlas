@@ -43,6 +43,39 @@ Skip any step = lying, not verifying.
 | "Build succeeds" | Build command exits with 0 |
 | "Feature works" | Running the feature produces expected output |
 
+## Key Patterns
+
+**Tests:**
+```
+✅ [Run test command] [See: 34/34 pass] "All tests pass"
+❌ "Should pass now" / "Looks correct"
+```
+
+**Regression tests (TDD Red-Green):**
+```
+✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
+❌ "I've written a regression test" (without red-green verification)
+```
+
+**Build:**
+```
+✅ [Run build] [See: exit 0] "Build passes"
+❌ "Linter passed" (linter doesn't check compilation)
+```
+
+**Agent delegation:**
+```
+✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
+❌ Trust agent report without verification
+```
+
+## Why This Matters
+
+- Undefined functions shipped — would crash
+- Missing requirements shipped — incomplete features
+- Time wasted on false completion → redirect → rework
+- Trust broken when claims don't match reality
+
 ## Red Flags
 
 | Phrase | Problem |
@@ -51,5 +84,28 @@ Skip any step = lying, not verifying.
 | "probably fixed" | You haven't verified |
 | "seems to be working" | You haven't verified |
 | "I verified earlier" | Verification isn't fresh |
+| "I'm confident" | Confidence ≠ evidence |
+| "Great!" / "Perfect!" / "Done!" | Expressing satisfaction before verification |
 
 No "should". No "probably". No "seems". Only evidence.
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "Should work now" | RUN the verification |
+| "I'm confident" | Confidence ≠ evidence |
+| "Just this once" | No exceptions |
+| "Linter passed" | Linter ≠ compiler |
+| "Agent said success" | Verify independently |
+| "I'm tired" | Exhaustion ≠ excuse |
+| "Partial check is enough" | Partial proves nothing |
+
+## When To Apply
+
+**ALWAYS before:**
+- ANY success/completion claims
+- ANY expression of satisfaction
+- Committing, PR creation, task completion
+- Moving to next task
+- Delegating to agents

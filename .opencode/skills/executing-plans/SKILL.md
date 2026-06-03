@@ -7,9 +7,13 @@ Execute a DAG-structured plan with scoped context per sub-task, local replanning
 
 Research basis: Task-Decoupled Planning (TDP, arXiv 2601.07577).
 
+**Announce at start:** "I'm using the executing-plans skill to implement this plan."
+
+**Note:** Subagent-Driven Development produces higher quality results. If subagents are available in your session, use `atlas:subagent-driven-development` instead. This skill is for when subagents are not available or you need a parallel session.
+
 ## When NOT to Use
 
-- Subagents are available (use subagent-driven-development instead — higher quality)
+- Subagents are available (use subagent-driven-development instead)
 - No written plan exists yet (use writing-plans first)
 - Tasks are independent and could benefit from parallel execution
 
@@ -54,12 +58,21 @@ Every 3-5 tasks, re-inject the original high-level objective into context. This 
 
 After all tasks complete and are verified, use `atlas:finishing-a-development-branch`.
 
-## When to Stop
+## When to Stop and Ask for Help
 
-- Blockers you cannot resolve with local replanning
-- A local failure cascades into requiring global replan
-- Repeated verification failures on the same KPI entity
-- The plan's assumptions are invalidated by execution results
+**STOP executing immediately when:**
+- Hit a blocker (missing dependency, test fails, instruction unclear)
+- Plan has critical gaps preventing starting
+- You don't understand an instruction
+- Verification fails repeatedly
+
+**Ask for clarification rather than guessing.**
+
+**Return to Review when:**
+- Partner updates the plan based on your feedback
+- Fundamental approach needs rethinking
+
+Don't force through blockers — stop and ask.
 
 ## Anti-Patterns
 

@@ -106,6 +106,7 @@ With plan approved:
 
 ### 5. Verify
 - Invoke `atlas:requesting-code-review` for pre-merge review
+- Invoke `atlas:receiving-code-review` when receiving review feedback — evaluate technically, don't perform agreement
 - Invoke `atlas:verification-before-completion` before claiming anything is done
 - Type check, lint, test — no shortcuts
 

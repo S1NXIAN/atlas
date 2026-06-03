@@ -25,12 +25,17 @@ Dispatch a code reviewer subagent to catch issues before they cascade. The revie
 
 ## How to Request
 
-1. Get git SHAs: `BASE_SHA` (commit before your changes) and `HEAD_SHA` (current)
-2. Dispatch a code reviewer subagent with:
+1. Get git SHAs:
+   ```bash
+   BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+   HEAD_SHA=$(git rev-parse HEAD)
+   ```
+2. Dispatch code reviewer subagent using the template at `code-reviewer.md`:
    - Description of what was implemented
    - The plan or requirements
    - `BASE_SHA` and `HEAD_SHA`
    - Never your session history
+3. Act on feedback: fix Critical immediately, fix Important before proceeding, note Minor for later
 
 ## Act on Feedback
 
