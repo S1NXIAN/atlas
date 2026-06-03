@@ -15,8 +15,7 @@ core/
 │   ├── code-quality.md
 │   ├── test-coverage.md
 │   ├── security-patterns.md
-│   ├── documentation.md
-│   └── code-analysis.md
+│   └── documentation.md
 │
 ├── workflows/
 │   ├── code-review.md

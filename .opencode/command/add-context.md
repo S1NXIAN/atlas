@@ -1,4 +1,5 @@
 ---
+name: add-context
 description: Interactive wizard to add project patterns to the context system
 ---
 
@@ -35,3 +36,10 @@ If the user runs `/add-context --update`:
 - Read existing context files
 - Ask what changed (new library, new pattern, migration)
 - Update the relevant files and bump version numbers
+
+## Quality Checklist
+
+- [ ] Questions asked one at a time
+- [ ] All 6 topics covered
+- [ ] Files generated under `.opencode/context/project/`
+- [ ] Each file follows MVI format

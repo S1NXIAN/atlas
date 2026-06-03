@@ -1,6 +1,6 @@
 ---
 name: using-atlas
-description: Use when starting any conversation — establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+description: Use when starting any conversation — establishes bootstrap behavior including skill invocation discipline, instruction priority, and subagent task boundaries
 ---
 
 <SUBAGENT-STOP>Subagents must skip this skill. It is for the main agent only.</SUBAGENT-STOP>
@@ -19,9 +19,9 @@ If there is even a 1% chance a skill applies, you MUST invoke it. This is not ne
 - `project:skill-name` — force project skill
 </EXTREMELY_IMPORTANT>
 
-## Using Skills
+## The Rule
 
-**The rule:** Invoke relevant or requested skills BEFORE any response or action. This includes clarifying questions — if a skill might apply, load it first.
+Invoke relevant or requested skills BEFORE any response or action. This includes clarifying questions — if a skill might apply, load it first.
 
 ```
 User says something
@@ -33,7 +33,7 @@ YES → Load skill → Follow its instructions → Respond/Act
 NO → Respond directly
 ```
 
-### Red Flags
+## Red Flags
 
 | Rationalization | Reality |
 |----------------|---------|
@@ -42,12 +42,12 @@ NO → Respond directly
 | "The skill is for coding, not discussion" | Skills cover planning, debugging, review, and more. |
 | "I already know what to do" | Skills exist because your defaults are insufficient. |
 
-### Skill Priority
+## Skill Priority
 
 1. **Process skills** first: brainstorming → writing-plans → executing/subagent-driven-development → requesting-code-review → finishing-a-development-branch
 2. **Implementation skills** as needed: test-driven-development, using-git-worktrees, systematic-debugging, dispatching-parallel-agents
 
-### Skill Types
+## Skill Types
 
 - **Rigid skills** — follow every instruction exactly as written (process skills)
 - **Flexible skills** — adapt principles to your situation (implementation skills)

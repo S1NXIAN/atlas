@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "You MUST use this before any creative work — creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+description: Use when starting any creative work — creating features, building components, adding functionality, or modifying behavior. Invoke before any implementation skill.
 ---
 
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
@@ -8,6 +8,12 @@ Help turn ideas into fully formed designs and specs through natural collaborativ
 <HARD-GATE>
 You MUST NOT invoke any implementation skill or write any code until the design is approved. This gate is absolute. "This is too simple to need a design" is an anti-pattern, not an exception.
 </HARD-GATE>
+
+## When NOT to Use
+
+- The task is purely operational (deploy, config change, dependency update)
+- A written spec already exists and is approved
+- The user explicitly says "no design needed, just build it"
 
 ## Process
 
@@ -21,7 +27,11 @@ You MUST NOT invoke any implementation skill or write any code until the design 
 8. **User reviews written spec** — wait for explicit approval
 9. **Transition to implementation** — invoke `atlas:writing-plans` NOT an implementation skill
 
-### Anti-Pattern: "This Is Too Simple To Need A Design"
+## Terminal State
+
+Invoke `atlas:writing-plans`. Never an implementation skill.
+
+## Anti-Pattern: "This Is Too Simple To Need A Design"
 
 | Claim | Reality |
 |-------|---------|
@@ -29,5 +39,3 @@ You MUST NOT invoke any implementation skill or write any code until the design 
 | "We already discussed this" | The spec serves as a record. New details emerge in writing. |
 | "I've done this a hundred times" | This project has unique constraints you haven't explored yet. |
 | "The user will get bored" | The user will be happier with a working result than a fast wrong one. |
-
-**Terminal state:** Invoke `atlas:writing-plans`. Never an implementation skill.

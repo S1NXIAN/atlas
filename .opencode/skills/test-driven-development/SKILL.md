@@ -9,11 +9,11 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
-## When to Use
+## When NOT to Use
 
-ALWAYS for: new features, bug fixes, refactoring, behavior changes.
-
-Exceptions (ask your human partner): throwaway prototypes, generated code, configuration files.
+- Throwaway prototypes (ask your human partner first)
+- Generated code (scaffolding, boilerplate)
+- Configuration files without logic
 
 ## The Iron Law
 
@@ -45,7 +45,7 @@ If you wrote code before the test, delete it and start over. No exceptions.
 | Shows intent | Demonstrates how the API should be used. |
 | Independent | Order-independent, no shared state. |
 
-## Why Order Matters
+## Red Flags
 
 | Rationalization | Reality |
 |----------------|---------|

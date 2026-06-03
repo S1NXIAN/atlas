@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-description: Use when executing implementation plans with independent tasks in the current session
+description: Use when executing an implementation plan with independent tasks and subagents are available in the current session
 ---
 
 Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
@@ -9,10 +9,16 @@ Execute plan by dispatching fresh subagent per task, with two-stage review after
 
 **Continuous execution:** Do not pause to check in with the human partner between tasks. Execute all tasks without stopping.
 
+## When NOT to Use
+
+- Tasks are tightly coupled and cannot be isolated
+- No subagents are available (use executing-plans instead)
+- The plan doesn't exist yet (use writing-plans first)
+
 ## When to Use
 
 ```
-Tasks are independent of each other?
+Tasks are independent?
   ├── YES → Subagents available?
   │         ├── YES → Use this skill
   │         └── NO  → Use executing-plans
@@ -37,7 +43,26 @@ Tasks are independent of each other?
 
 ### Implementer Status Handling
 
-- `DONE` — task completed cleanly, proceed
-- `DONE_WITH_CONCERNS` — review concerns, fix if needed, proceed
-- `NEEDS_CONTEXT` — provide context, re-dispatch
-- `BLOCKED` — stop, escalate to human partner
+| Status | Action |
+|--------|--------|
+| DONE | Proceed to spec review |
+| DONE_WITH_CONCERNS | Review concerns, fix if needed, proceed |
+| NEEDS_CONTEXT | Provide context, re-dispatch |
+| BLOCKED | Stop, escalate to human partner |
+
+## Anti-Patterns
+
+| Pattern | Problem | Fix |
+|---------|---------|-----|
+| Dispatching multiple implementers in parallel | File conflicts, merge hell | One task at a time, sequentially |
+| Skipping the spec review | Over-building or under-building | Spec review before quality review |
+| Sharing full session history with subagent | Context pollution, wasted tokens | Craft precisely what the subagent needs |
+| Proceeding with unfixed review issues | Accumulated debt | Fix every issue before next task |
+
+## Quality Checklist
+
+- [ ] All tasks extracted into todowrite before starting
+- [ ] Each implementer gets precise, isolated context
+- [ ] Spec compliance review done before quality review
+- [ ] Issues fixed before proceeding to next task
+- [ ] Final code review dispatched after all tasks

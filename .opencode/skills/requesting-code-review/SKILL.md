@@ -1,13 +1,15 @@
 ---
 name: requesting-code-review
-description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
+description: Use after completing a task, implementing a feature, or before merging — any time changes need verification against requirements
 ---
 
 Dispatch a code reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history.
 
-## Core Principle
+## When NOT to Use
 
-Review early, review often.
+- Changes are trivial (typo fix, comment update)
+- You are still in active development (review after task completion)
+- The code hasn't been tested yet (test first, then review)
 
 ## When to Request Review
 
@@ -43,3 +45,10 @@ Review early, review often.
 
 - In Subagent-Driven Development: review after EACH task
 - In Executing Plans: review after each task or at natural checkpoints
+
+## Quality Checklist
+
+- [ ] Code has been tested before requesting review
+- [ ] Reviewer gets spec context, not session history
+- [ ] Git SHAs provided for diff
+- [ ] Critical and Important issues fixed before proceeding

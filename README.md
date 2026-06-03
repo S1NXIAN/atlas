@@ -52,8 +52,7 @@ Include `ultrawork` (or `ulw`) in any prompt to activate the full Atlas pipeline
 │   └── dispatching-parallel-agents/
 ├── agents/                      # Editable markdown agents
 │   ├── core/
-│   │   ├── sisyphus.md          # Main orchestrator
-│   │   └── atlas.md             # Production coder
+│   │   └── atlas.md             # End-to-end orchestrator & production coder
 │   └── subagents/
 │       ├── context-scout.md     # Pattern discovery (OAC)
 │       ├── oracle.md            # Architecture/debugging
@@ -109,7 +108,7 @@ No hardcoded models. Atlas uses your default OpenCode model. To override per-age
 ```json
 {
   "agent": {
-    "sisyphus": { "model": "anthropic/claude-sonnet-4-5" },
+    "atlas": { "model": "anthropic/claude-sonnet-4-5" },
     "oracle": { "model": "openai/gpt-5.2" }
   }
 }

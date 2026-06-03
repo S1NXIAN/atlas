@@ -7,19 +7,14 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 
 **Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
 
+## When NOT to Use
+
+- The issue is already diagnosed and root cause is known (fix directly)
+- The behavior is expected (misunderstanding, not a bug)
+
 ## The Iron Law
 
 **NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST.**
-
-## When to Use
-
-ANY technical issue: test failures, bugs, unexpected behavior, performance problems, build failures, integration issues.
-
-Use ESPECIALLY when:
-- Under time pressure
-- A quick fix seems obvious
-- Previous fixes have failed
-- The issue isn't fully understood
 
 ## The Four Phases
 
@@ -55,3 +50,12 @@ Use ESPECIALLY when:
 | "Let me just try this" | Guessing is not debugging. |
 | "It worked before" | What changed? Find it. |
 | "This looks like that other bug" | Similar symptoms ≠ same root cause. |
+
+## Quality Checklist
+
+- [ ] Error message read completely
+- [ ] Issue reproduced consistently
+- [ ] Recent changes checked
+- [ ] Root cause identified before fix
+- [ ] Fix verified against original symptom
+- [ ] No regressions introduced
