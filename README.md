@@ -13,7 +13,7 @@ Atlas combines the best of three opencode ecosystems into one cohesive experienc
 ## Quick Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/your-org/atlas/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/S1NXIAN/atlas/main/install.sh | bash
 ```
 
 Restart OpenCode, then:
@@ -117,7 +117,7 @@ No hardcoded models. Atlas uses your default OpenCode model. To override per-age
 ## Updating
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/your-org/atlas/main/update.sh | bash
+curl -fsSL https://raw.githubusercontent.com/S1NXIAN/atlas/main/update.sh | bash
 ```
 
 ## Philosophy
