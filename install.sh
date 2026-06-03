@@ -83,6 +83,23 @@ if [ -f "$OPENCODE_PLUGIN_DIR/atlas.js" ] || [ -L "$OPENCODE_PLUGIN_DIR/atlas.js
 fi
 ln -sf "$INSTALL_DIR/.opencode/plugins/atlas.js" "$OPENCODE_PLUGIN_DIR/atlas.js"
 
+# Register agents globally so they're available across all projects
+OPENCODE_AGENTS_DIR="$HOME/.config/opencode/agents"
+mkdir -p "$OPENCODE_AGENTS_DIR"
+
+# Remove stale agent symlinks (agents that existed in a prior install but were removed)
+for existing_link in "$OPENCODE_AGENTS_DIR/"*.md; do
+    if [ -L "$existing_link" ] && [ ! -e "$existing_link" ]; then
+        rm -f "$existing_link"
+    fi
+done
+
+# Symlink current agents
+for agent_file in "$INSTALL_DIR/.opencode/agents/"*.md; do
+    agent_name="$(basename "$agent_file")"
+    ln -sf "$agent_file" "$OPENCODE_AGENTS_DIR/$agent_name"
+done
+
 # Verify
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
